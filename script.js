@@ -2,7 +2,7 @@
 // @name         Gemini Chat Dump Archivist
 // @name:zh-CN   Gemini 聊天记录导出助手 (Chat Dump)
 // @namespace    https://github.com/miniyu157/gemini-chat-dump-archivist
-// @version      2026.3.14
+// @version      2026.3.15
 // @description  Export Gemini chat history to JSON with accurate Markdown preservation.
 // @description:zh-CN 将 Gemini 聊天记录导出为 JSON，并精准保留 Markdown 格式。
 // @author       Yumeka
@@ -26,12 +26,33 @@
   const td = new TurndownService({ codeBlockStyle: 'fenced', headingStyle: 'atx' });
   td.remove(CONFIG.turndownIgnores);
 
+  const Formatters = {
+    date: () => {
+      const d = new Date();
+      const p = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}_${p(d.getMinutes())}_${p(d.getSeconds())}`;
+    },
+    filename: () => {
+      const el = document.querySelector('[data-test-id="conversation-title"]');
+      const title = el ? el.textContent.trim().replace(/[\/\\:*?"<>|]/g, '') : 'Gemini_Chat';
+      return `${title}_${Formatters.date()}.json`;
+    }
+  };
+
+  const PostProcessor = {
+    user: (text) => {
+      const t = text || '';
+      const idx = t.indexOf('\n\n');
+      return (idx !== -1 ? t.substring(idx + 2) : t).trim();
+    }
+  };
+
   const extractData = () => {
     const data = [];
     document.querySelectorAll('.conversation-container').forEach(node => {
       const user = node.querySelector('user-query .query-text');
       const model = node.querySelector('model-response message-content .markdown');
-      if (user) data.push({ role: 'user', content: user.innerText.trim() });
+      if (user) data.push({ role: 'user', content: PostProcessor.user(user.innerText) });
       if (model) data.push({ role: 'model', content: td.turndown(model).trim() });
     });
     return JSON.stringify(data, null, 2);
@@ -41,7 +62,7 @@
     downloadJson: () => {
       const a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob([extractData()], { type: 'application/json' }));
-      a.download = `Gemini_Export_${Date.now()}.json`;
+      a.download = Formatters.filename();
       a.click();
       URL.revokeObjectURL(a.href);
     },
