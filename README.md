@@ -17,3 +17,8 @@
 **预览:**
 
 ![menu](https://raw.githubusercontent.com/miniyu157/gemini-chat-dump-archivist/main/assets/menu.png)
+
+> [!TIP]
+> 还搞了一个渲染器:  
+> 预览: [点击查看](https://yumeka.blog/renderer/)
+> 源代码: [点击查看](https://github.com/miniyu157/home/blob/main/renderer%2Findex.html)
